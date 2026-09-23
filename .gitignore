@@ -1,0 +1,93 @@
+# === Dependencies ===
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# === Next.js ===
+.next/
+out/
+.vercel/
+.turbo/
+
+# === Build / production ===
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# === Environment & secrets ===
+.env
+.env.*
+!.env.example
+!.env*.example
+*.pem
+*.p12
+*.key
+credentials*.json
+service-account*.json
+
+# === Logs & debug ===
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.log
+
+# === Test / coverage ===
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+cypress/videos/
+cypress/screenshots/
+
+# === Caches ===
+.eslintcache
+.stylelintcache
+.cache/
+*.cache
+
+# === OS ===
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# === Editors / IDEs ===
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+*.swp
+*.swo
+*~
+
+# === Local tooling / agent artifacts ===
+.cursor/
+.claude/
+.agent/
+*.local.md
+CURSOR_MASTER_*.md
+*_BUILD_PROMPT*.md
+
+# === Source / working assets (optimized copies live in /public) ===
+/Mehrafarin.png
+*.psd
+*.ai
+*.sketch
+*.fig
+
+# === Misc ===
+*.bak
+*.tmp
+*.temp
+.parcel-cache/

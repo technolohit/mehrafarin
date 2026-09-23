@@ -1,0 +1,257 @@
+@import "tailwindcss";
+
+:root {
+  --color-bg: #e4e3e1;
+  --color-bg-warm: #ebe7e0;
+  --color-text: #5c5652;
+  --color-text-strong: #3f3b38;
+  --color-muted: #8f8a85;
+  --color-gold: #d5bd89;
+  --color-accent: #d87237;
+  --color-surface-soft: #efece7;
+  --color-surface-paper: #f3efe8;
+  --color-surface-elevated: #f7f4ef;
+  --color-footer: #6f6965;
+  --color-dark-panel: #6d6762;
+  --color-on-dark: #f7f4ef;
+  --color-on-accent: #ffffff;
+
+  --radius-sm: 12px;
+  --radius-md: 22px;
+  --radius-lg: 36px;
+  --radius-pill: 999px;
+
+  --font-sans: var(--font-manrope), system-ui, sans-serif;
+  --font-display: var(--font-cormorant), var(--font-noto-naskh), Georgia, serif;
+  --font-persian: var(--font-vazirmatn), var(--font-manrope), system-ui, sans-serif;
+  --font-signature: var(--font-great-vibes), var(--font-noto-naskh), cursive;
+
+  --container-max: 74rem;
+  --container-pad: clamp(1.25rem, 4vw, 4.5rem);
+  --section-space: clamp(4.5rem, 9vw, 7.5rem);
+  --reading-max: 40rem;
+}
+
+@theme inline {
+  --color-bg: #e4e3e1;
+  --color-bg-warm: #ebe7e0;
+  --color-text: #5c5652;
+  --color-text-strong: #3f3b38;
+  --color-muted: #8f8a85;
+  --color-gold: #d5bd89;
+  --color-accent: #d87237;
+  --color-surface-soft: #efece7;
+  --color-surface-paper: #f3efe8;
+  --color-surface-elevated: #f7f4ef;
+  --color-footer: #6f6965;
+  --color-dark-panel: #6d6762;
+  --color-on-dark: #f7f4ef;
+  --color-on-accent: #ffffff;
+  --radius-sm: 12px;
+  --radius-md: 22px;
+  --radius-lg: 36px;
+  --radius-pill: 999px;
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+  --font-persian: var(--font-persian);
+  --font-signature: var(--font-signature);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--color-gold) 14%, transparent), transparent 34%),
+    radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--color-accent) 8%, transparent), transparent 28%),
+    var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: clamp(1rem, 0.25vw + 0.95rem, 1.0625rem);
+  line-height: 1.7;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+html[lang="fa"] body {
+  font-family: var(--font-persian);
+  line-height: 1.9;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-gold) 55%, white);
+  color: var(--color-text-strong);
+}
+
+.container-shell {
+  width: min(100% - (var(--container-pad) * 2), var(--container-max));
+  margin-inline: auto;
+}
+
+.section-space {
+  padding-block: var(--section-space);
+}
+
+.display-title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  color: var(--color-text-strong);
+}
+
+html[lang="fa"] .display-title {
+  font-family: var(--font-noto-naskh), var(--font-vazirmatn), serif;
+  letter-spacing: 0;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.signature-text {
+  font-family: var(--font-signature);
+  font-size: clamp(2rem, 3.5vw, 2.75rem);
+  line-height: 1.2;
+  color: var(--color-text-strong);
+}
+
+html[lang="fa"] .signature-text {
+  font-family: var(--font-noto-naskh), var(--font-vazirmatn), serif;
+  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  font-weight: 600;
+}
+
+.lead-text {
+  font-size: clamp(1.05rem, 0.35vw + 1rem, 1.2rem);
+  line-height: 1.75;
+  color: color-mix(in srgb, var(--color-text) 94%, black);
+  max-width: var(--reading-max);
+}
+
+html[lang="fa"] .lead-text {
+  line-height: 1.95;
+}
+
+.nav-link {
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  transition: color 220ms ease;
+}
+
+html[lang="fa"] .nav-link {
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-size: 0.92rem;
+}
+
+.nav-link:hover {
+  color: var(--color-accent);
+}
+
+.blob-frame {
+  position: relative;
+  isolation: isolate;
+  border-radius: 58% 42% 48% 52% / 48% 54% 46% 52%;
+  overflow: hidden;
+  background: var(--color-surface-soft);
+  box-shadow:
+    0 28px 60px color-mix(in srgb, var(--color-text) 12%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--color-gold) 28%, transparent);
+}
+
+.paper-card {
+  position: relative;
+  background:
+    linear-gradient(180deg, #f8f4ec 0%, #f1ebe1 100%);
+  border-radius: 4px 18px 14px 8px;
+  box-shadow:
+    0 18px 40px color-mix(in srgb, var(--color-text) 14%, transparent),
+    0 1px 0 color-mix(in srgb, white 70%, transparent);
+}
+
+.paper-card::before {
+  content: "";
+  position: absolute;
+  inset-inline: 10% 18%;
+  top: -10px;
+  height: 18px;
+  border-radius: 999px;
+  background: radial-gradient(circle at center, #c4a46a 0 42%, transparent 43%);
+  filter: drop-shadow(0 2px 2px color-mix(in srgb, var(--color-text) 25%, transparent));
+}
+
+.site-grain {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.vertical-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+html[lang="fa"] .vertical-label {
+  letter-spacing: 0.08em;
+  text-transform: none;
+  font-size: 0.85rem;
+}
