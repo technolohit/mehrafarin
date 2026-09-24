@@ -17,8 +17,8 @@ npm run dev
 
 Open:
 
-- http://localhost:3000/fa
-- http://localhost:3000/en
+- http://localhost:2580/fa
+- http://localhost:2580/en
 
 ## Scripts
 

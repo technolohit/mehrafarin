@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { isLocale, type Locale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { buildPageMetadata } from "@/lib/metadata/seo";
-import { PlaceholderPage } from "@/components/sections/PlaceholderPage";
+import { ProcessPageView } from "@/components/sections/ProcessPageView";
 
 type PageProps = {
   params: Promise<{ locale: string }>;
@@ -13,10 +13,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { locale: localeParam } = await params;
   if (!isLocale(localeParam)) return {};
   const dictionary = await getDictionary(localeParam);
+  const { meta } = dictionary.pages.process;
   return buildPageMetadata({
     locale: localeParam,
-    title: `${dictionary.nav.process} | ${dictionary.brand}`,
-    description: dictionary.home.process.lead,
+    title: meta.title,
+    description: meta.description,
     path: "/process",
   });
 }
@@ -27,12 +28,5 @@ export default async function ProcessPage({ params }: PageProps) {
   const locale = localeParam as Locale;
   const dictionary = await getDictionary(locale);
 
-  return (
-    <PlaceholderPage
-      locale={locale}
-      title={dictionary.nav.process}
-      message={dictionary.placeholders.pageComing}
-      homeLabel={dictionary.nav.home}
-    />
-  );
+  return <ProcessPageView locale={locale} content={dictionary.pages.process} />;
 }

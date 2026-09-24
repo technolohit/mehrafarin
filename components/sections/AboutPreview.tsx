@@ -15,11 +15,14 @@ export function AboutPreview({ locale, content }: AboutPreviewProps) {
   return (
     <section className="section-space border-t border-[color-mix(in_srgb,var(--color-muted)_28%,transparent)]">
       <Container className="grid items-center gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
-        <Reveal className="mx-auto w-full max-w-md lg:mx-0" y={28}>
+        <Reveal className="mx-auto w-full max-w-sm sm:max-w-md lg:mx-0 lg:max-w-none" y={28}>
           <BlobPortrait
-            src="/images/portrait/mehrafarin-kolahdoozan-portrait.webp"
+            variant="rect"
+            src="/images/portrait/mehrafarin-kolahdoozan.webp"
             alt={content.imageAlt}
-            sizes="(max-width: 1024px) 80vw, 32vw"
+            objectPosition="center 18%"
+            sizes="(max-width: 640px) 90vw, (max-width: 1024px) 55vw, 34vw"
+            className="w-full max-w-[22rem] sm:max-w-[24rem] lg:max-w-[26rem]"
           />
         </Reveal>
 

@@ -1,0 +1,47 @@
+# Production Compose — immutable image via MEHRAFARIN_IMAGE digest.
+# Example: MEHRAFARIN_IMAGE=thnhit/mehrafarin@sha256:<digest>
+# Deployed by ops/deploy/deploy-mehrafarin (never use mutable "latest").
+#
+# Required:
+#   MEHRAFARIN_IMAGE
+# Optional:
+#   MEHRAFARIN_HOST_PORT (default 2580)
+#   NEXT_PUBLIC_SITE_URL (default https://darmanafarin.com)
+
+services:
+  mehrafarin:
+    image: ${MEHRAFARIN_IMAGE:?Set MEHRAFARIN_IMAGE to the image reference to run}
+    ports:
+      - "127.0.0.1:${MEHRAFARIN_HOST_PORT:-2580}:3000"
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=64m
+      - /app/.next/cache:rw,nosuid,nodev,uid=1001,gid=1001,mode=1777,size=128m
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://darmanafarin.com}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

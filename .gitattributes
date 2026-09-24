@@ -1,0 +1,4 @@
+# Shell / deploy scripts must stay LF on the Linux host.
+ops/deploy/deploy-mehrafarin text eol=lf
+ops/deploy/mehrafarin-deploy-ssh text eol=lf
+*.sh text eol=lf

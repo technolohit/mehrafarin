@@ -17,9 +17,11 @@ export function ApproachSection({ content }: ApproachSectionProps) {
         />
         <div className="space-y-6">
           <p className="lead-text">{content.body}</p>
-          <p className="max-w-xl border-s-2 border-[var(--color-gold)] ps-5 text-[0.98rem] text-[var(--color-muted)]">
-            {content.note}
-          </p>
+          {content.note ? (
+            <p className="max-w-xl border-s-2 border-[var(--color-gold)] ps-5 text-[0.98rem] text-[var(--color-muted)]">
+              {content.note}
+            </p>
+          ) : null}
         </div>
       </Container>
     </section>

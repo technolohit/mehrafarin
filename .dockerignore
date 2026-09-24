@@ -1,0 +1,54 @@
+# Dependencies and build context exclusions for production images.
+# Keep the build context small and secret-free.
+
+# VCS / IDE
+.git
+.gitignore
+.gitattributes
+.github
+.cursor
+.vscode
+.idea
+
+# Env and secrets (never bake into images)
+.env
+.env.*
+
+# Dependencies and caches
+node_modules
+.next
+.next-stale-cache
+out
+dist
+coverage
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Local / docs / non-runtime sources
+Docs
+README.md
+**/*.md
+
+# Ops (host-side only)
+ops
+
+# Tests
+**/__tests__
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+scripts
+
+# OS junk
+.DS_Store
+Thumbs.db
+*.pem
+.vercel
+.wrangler
+.sites-runtime
+outputs
+work

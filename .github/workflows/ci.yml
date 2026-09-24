@@ -1,0 +1,164 @@
+name: Mehrafarin CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mehrafarin-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        # actions/checkout v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        # actions/setup-node v6.5.0
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev
+
+  container-smoke:
+    name: container-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        # actions/checkout v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Build image
+        run: docker build --tag mehrafarin:ci .
+
+      - name: Validate Compose file
+        env:
+          MEHRAFARIN_IMAGE: mehrafarin:ci
+        run: docker compose -f compose.production.yml config
+
+      - name: Start container
+        env:
+          MEHRAFARIN_IMAGE: mehrafarin:ci
+        run: |
+          set -euo pipefail
+
+          if ! docker compose -f compose.production.yml up -d --no-build; then
+            echo "::group::Container diagnostics (startup failure)"
+            docker compose -f compose.production.yml ps --all || true
+            docker compose -f compose.production.yml logs --no-color || true
+            echo "::endgroup::"
+            exit 1
+          fi
+
+      - name: Smoke test
+        env:
+          MEHRAFARIN_IMAGE: mehrafarin:ci
+        run: |
+          set -euo pipefail
+
+          on_error() {
+            echo "::group::Container logs (failure)"
+            docker compose -f compose.production.yml logs || true
+            echo "::endgroup::"
+          }
+          trap on_error ERR
+
+          echo "Waiting for /api/health..."
+          ready=0
+          for _ in $(seq 1 40); do
+            if curl -fsS --max-time 5 "http://127.0.0.1:2580/api/health" -o /tmp/mehrafarin-health.json; then
+              if grep -Eq '"ok"[[:space:]]*:[[:space:]]*true' /tmp/mehrafarin-health.json; then
+                ready=1
+                break
+              fi
+            fi
+            sleep 3
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo "Timed out waiting for health endpoint"
+            exit 1
+          fi
+
+          health_code=$(curl -sS --max-time 5 -o /tmp/mehrafarin-health.json -w "%{http_code}" "http://127.0.0.1:2580/api/health")
+          echo "Health HTTP status: ${health_code}"
+          echo "Health body: $(cat /tmp/mehrafarin-health.json)"
+          test "$health_code" = "200"
+          grep -Eq '"ok"[[:space:]]*:[[:space:]]*true' /tmp/mehrafarin-health.json
+
+          home_code=$(curl -sS --max-time 10 -o /dev/null -w "%{http_code}" "http://127.0.0.1:2580/")
+          echo "Homepage HTTP status: ${home_code}"
+          test "$home_code" = "200"
+
+          cid="$(docker compose -f compose.production.yml ps -q mehrafarin)"
+          test -n "$cid"
+
+          echo "Waiting for Docker healthcheck status=healthy..."
+          healthy=0
+          for _ in $(seq 1 40); do
+            status="$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$cid")"
+            echo "Health status: ${status}"
+            if [ "$status" = "healthy" ]; then
+              healthy=1
+              break
+            fi
+            sleep 3
+          done
+          if [ "$healthy" -ne 1 ]; then
+            echo "Timed out waiting for container healthcheck"
+            exit 1
+          fi
+
+          config_user="$(docker inspect --format='{{.Config.User}}' "$cid")"
+          echo "Config.User=${config_user}"
+          test -n "$config_user"
+          test "$config_user" != "root"
+          test "$config_user" != "0"
+          test "$config_user" != "0:0"
+
+          euid="$(docker compose -f compose.production.yml exec -T mehrafarin node -e 'process.stdout.write(String(process.getuid()))')"
+          echo "Effective UID=${euid}"
+          test "$euid" != "0"
+
+          published="$(docker port "$cid" 3000/tcp)"
+          echo "Published port mapping: ${published}"
+          test "$published" = "127.0.0.1:2580"
+
+          echo "container-smoke checks passed"
+
+      - name: Cleanup
+        if: always()
+        env:
+          MEHRAFARIN_IMAGE: mehrafarin:ci
+        run: docker compose -f compose.production.yml down --remove-orphans

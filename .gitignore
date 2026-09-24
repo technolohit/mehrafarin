@@ -72,7 +72,9 @@ Desktop.ini
 *~
 
 # === Local tooling / agent artifacts ===
-.cursor/
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**
 .claude/
 .agent/
 *.local.md

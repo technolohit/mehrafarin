@@ -1,0 +1,631 @@
+#!/bin/bash
+# mehrafarin production deploy — installed root-owned as /usr/local/sbin/deploy-mehrafarin
+# Accepts exactly one immutable image: thnhit/mehrafarin@sha256:<64 lowercase hex>
+set -Eeuo pipefail
+
+readonly PATH='/usr/sbin:/usr/bin:/sbin:/bin'
+export PATH
+umask 077
+
+readonly IMAGE_RE='^thnhit/mehrafarin@sha256:[0-9a-f]{64}$'
+readonly APP_DIR='/opt/mehrafarin'
+readonly COMPOSE_FILE='compose.production.yml'
+readonly LOCK_FILE='/var/lock/mehrafarin-deploy.lock'
+readonly DIAG_DIR='/var/log/mehrafarin-deploy'
+readonly DEFAULT_HOST_PORT='2580'
+readonly HEALTH_WAIT_SECONDS=180
+readonly HEALTH_POLL_SECONDS=3
+readonly LOG_TAIL_LINES=120
+readonly ENV_BACKUP_KEEP=10
+
+PREVIOUS_IMAGE=''
+ENV_BACKUP=''
+ENV_MUTATION_STARTED=0
+SERVICE_MUTATION_STARTED=0
+ROLLING_BACK=0
+ROLLBACK_ATTEMPTED=0
+SIGNAL_DURING_ROLLBACK=0
+
+die() {
+  # Must return (not exit) so the ERR trap can run automatic rollback.
+  printf 'ERROR: %s\n' "$*" >&2
+  return 1
+}
+
+log() {
+  printf '%s\n' "$*"
+}
+
+require_root() {
+  if [[ "$(id -u)" -ne 0 ]]; then
+    die "must run as root (effective UID 0)"
+  fi
+}
+
+validate_image() {
+  local image="${1:-}"
+  if [[ ! "${image}" =~ ${IMAGE_RE} ]]; then
+    die "image must match ${IMAGE_RE}"
+  fi
+}
+
+read_env_value() {
+  # Read a single KEY=value from an env file. Never prints other keys.
+  local file="$1"
+  local key="$2"
+  local line value
+
+  line="$(grep -E "^[[:space:]]*${key}=" "${file}" | tail -n 1 || true)"
+  if [[ -z "${line}" ]]; then
+    return 1
+  fi
+  value="${line#*=}"
+  if [[ "${value}" == \"*\" && "${value}" == *\" ]]; then
+    value="${value:1:${#value}-2}"
+  elif [[ "${value}" == \'*\' && "${value}" == *\' ]]; then
+    value="${value:1:${#value}-2}"
+  fi
+  printf '%s' "${value}"
+}
+
+health_url() {
+  local port="${DEFAULT_HOST_PORT}"
+  local from_env=''
+  from_env="$(read_env_value "${APP_DIR}/.env" MEHRAFARIN_HOST_PORT || true)"
+  if [[ "${from_env}" =~ ^[0-9]+$ ]]; then
+    port="${from_env}"
+  fi
+  printf 'http://127.0.0.1:%s/api/health' "${port}"
+}
+
+compose() {
+  docker compose -f "${COMPOSE_FILE}" "$@"
+}
+
+container_id() {
+  compose ps -q mehrafarin
+}
+
+image_available_locally() {
+  local image="$1"
+  docker image inspect "${image}" >/dev/null 2>&1
+}
+
+ensure_image_available() {
+  # Prefer local digest; pull only if missing. Explicit status for callers using set +e.
+  local image="$1"
+  local label="${2:-image}"
+
+  if image_available_locally "${image}"; then
+    log "${label} available locally; skipping registry pull"
+    return 0
+  fi
+
+  log "${label} not local; pulling from registry"
+  if ! docker pull "${image}"; then
+    log "ERROR: docker pull failed for ${label}"
+    return 1
+  fi
+  if ! image_available_locally "${image}"; then
+    log "ERROR: ${label} still missing after pull"
+    return 1
+  fi
+  return 0
+}
+
+wait_docker_healthy() {
+  local cid="$1"
+  local elapsed=0
+  local status
+
+  log "Waiting for Docker health status=healthy (timeout ${HEALTH_WAIT_SECONDS}s)..."
+  while (( elapsed < HEALTH_WAIT_SECONDS )); do
+    if ! status="$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "${cid}")"; then
+      log "ERROR: docker inspect failed while waiting for health"
+      return 1
+    fi
+    log "  Docker health: ${status}"
+    if [[ "${status}" == "healthy" ]]; then
+      return 0
+    fi
+    if [[ "${status}" == "unhealthy" ]]; then
+      log "ERROR: container became unhealthy"
+      return 1
+    fi
+    sleep "${HEALTH_POLL_SECONDS}"
+    elapsed=$((elapsed + HEALTH_POLL_SECONDS))
+  done
+  log "ERROR: timed out waiting for Docker healthy status"
+  return 1
+}
+
+check_http_health() {
+  local url="$1"
+  local code body
+  local tmp
+
+  tmp="$(mktemp)"
+  code="$(curl -sS --max-time 10 -o "${tmp}" -w '%{http_code}' "${url}" || true)"
+  body="$(cat "${tmp}" || true)"
+  rm -f "${tmp}"
+
+  if [[ "${code}" != "200" ]]; then
+    log "ERROR: health HTTP status was ${code} (expected 200) at ${url}"
+    return 1
+  fi
+  if ! grep -Eq '"ok"[[:space:]]*:[[:space:]]*true' <<<"${body}"; then
+    log "ERROR: health body missing \"ok\": true"
+    return 1
+  fi
+  log "HTTP health OK (${url})"
+  return 0
+}
+
+verify_running_image() {
+  local expected="$1"
+  local cid expected_id running_id digests
+
+  cid="$(container_id || true)"
+  if [[ -z "${cid}" ]]; then
+    log "ERROR: mehrafarin container id not found"
+    return 1
+  fi
+
+  if ! expected_id="$(docker image inspect --format='{{.Id}}' "${expected}")"; then
+    log "ERROR: cannot inspect expected image id"
+    return 1
+  fi
+  if ! running_id="$(docker inspect --format='{{.Image}}' "${cid}")"; then
+    log "ERROR: cannot inspect running container image id"
+    return 1
+  fi
+  if [[ "${expected_id}" != "${running_id}" ]]; then
+    log "ERROR: running container image id does not match requested image"
+    return 1
+  fi
+
+  if ! digests="$(docker image inspect --format='{{range .RepoDigests}}{{println .}}{{end}}' "${expected}")"; then
+    log "ERROR: cannot read RepoDigests for expected image"
+    return 1
+  fi
+  if ! grep -Fxq "${expected}" <<<"${digests}"; then
+    log "ERROR: requested digest not present in local RepoDigests for image"
+    return 1
+  fi
+
+  log "Running container matches requested digest"
+  return 0
+}
+
+assert_compose_image() {
+  local expected="$1"
+  local images
+
+  if ! images="$(compose config --images | tr -d '\r')"; then
+    log "ERROR: compose config --images failed"
+    return 1
+  fi
+  if ! grep -Fxq "${expected}" <<<"${images}"; then
+    log "ERROR: compose config --images did not resolve to ${expected}"
+    return 1
+  fi
+  if [[ "$(grep -c . <<<"${images}")" -ne 1 ]]; then
+    log "ERROR: compose config --images returned unexpected image set"
+    return 1
+  fi
+  return 0
+}
+
+ensure_diag_dir() {
+  mkdir -p "${DIAG_DIR}"
+  chown root:root "${DIAG_DIR}" 2>/dev/null || true
+  chmod 700 "${DIAG_DIR}" 2>/dev/null || true
+}
+
+# Safe operational summary for SSH/GitHub. Raw app logs stay on-server only.
+dump_diagnostics() {
+  local stamp diag_file cid status health image_id
+  stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+  diag_file="${DIAG_DIR}/deploy-${stamp}.log"
+  cid=''
+  status='unknown'
+  health='unknown'
+  image_id='unknown'
+
+  ensure_diag_dir || true
+
+  {
+    printf 'timestamp=%s\n' "${stamp}"
+    printf 'requested_previous=%s\n' "${PREVIOUS_IMAGE:-}"
+    printf 'env_mutation_started=%s service_mutation_started=%s\n' \
+      "${ENV_MUTATION_STARTED}" "${SERVICE_MUTATION_STARTED}"
+    printf '\n--- compose ps ---\n'
+    compose ps --all || true
+    cid="$(container_id || true)"
+    printf '\ncontainer_id=%s\n' "${cid}"
+    if [[ -n "${cid}" ]]; then
+      status="$(docker inspect --format='{{.State.Status}}' "${cid}" 2>/dev/null || echo unknown)"
+      health="$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "${cid}" 2>/dev/null || echo unknown)"
+      image_id="$(docker inspect --format='{{.Image}}' "${cid}" 2>/dev/null || echo unknown)"
+      printf 'status=%s health=%s image=%s\n' "${status}" "${health}" "${image_id}"
+      printf '\n--- docker logs (tail %s) ---\n' "${LOG_TAIL_LINES}"
+      docker logs --tail "${LOG_TAIL_LINES}" "${cid}" 2>&1 || true
+    else
+      printf '\n--- compose logs (tail %s) ---\n' "${LOG_TAIL_LINES}"
+      compose logs --no-color --tail="${LOG_TAIL_LINES}" mehrafarin || true
+    fi
+  } >"${diag_file}" 2>&1 || true
+
+  if [[ -f "${diag_file}" ]]; then
+    chown root:root "${diag_file}" 2>/dev/null || true
+    chmod 600 "${diag_file}" 2>/dev/null || true
+  fi
+
+  # Re-read safe fields for GitHub-visible summary (no log bodies).
+  cid="$(container_id || true)"
+  if [[ -n "${cid}" ]]; then
+    status="$(docker inspect --format='{{.State.Status}}' "${cid}" 2>/dev/null || echo unknown)"
+    health="$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "${cid}" 2>/dev/null || echo unknown)"
+    image_id="$(docker inspect --format='{{.Image}}' "${cid}" 2>/dev/null || echo unknown)"
+  fi
+
+  log "---- deploy diagnostics (safe summary) ----"
+  compose ps --all || true
+  log "container_id=${cid:-none}"
+  log "status=${status}"
+  log "health=${health}"
+  log "image_id=${image_id}"
+  log "rollback_status=pending_or_in_progress"
+  if [[ -f "${diag_file}" ]]; then
+    log "full_diagnostics_path=${diag_file}"
+  else
+    log "full_diagnostics_path=unavailable"
+  fi
+  log "---- end diagnostics summary ----"
+}
+
+atomic_set_mehrafarin_image() {
+  local env_file="$1"
+  local new_image="$2"
+  local tmp
+  local dir
+
+  dir="$(dirname "${env_file}")"
+  tmp="$(mktemp "${dir}/.env.deploy.XXXXXX")"
+  chmod --reference="${env_file}" "${tmp}" 2>/dev/null || chmod 600 "${tmp}"
+
+  # Rewrite existing MEHRAFARIN_IMAGE=… or append on first bootstrap.
+  if ! awk -v img="${new_image}" '
+    BEGIN { done = 0 }
+    /^[[:space:]]*MEHRAFARIN_IMAGE=/ {
+      print "MEHRAFARIN_IMAGE=" img
+      done = 1
+      next
+    }
+    { print }
+    END {
+      if (!done) print "MEHRAFARIN_IMAGE=" img
+    }
+  ' "${env_file}" >"${tmp}"; then
+    rm -f "${tmp}"
+    log "ERROR: failed to write MEHRAFARIN_IMAGE in .env"
+    return 1
+  fi
+
+  if ! mv -f "${tmp}" "${env_file}"; then
+    rm -f "${tmp}"
+    log "ERROR: failed to atomically replace .env"
+    return 1
+  fi
+  return 0
+}
+
+prune_env_backups() {
+  # Keep newest ENV_BACKUP_KEEP backups; never delete the in-progress ENV_BACKUP.
+  local -a backups=()
+  local f
+  local kept=0
+
+  while IFS= read -r f; do
+    [[ -n "${f}" ]] || continue
+    backups+=("${f}")
+  done < <(ls -1t "${APP_DIR}"/.env.deploy-backup.* 2>/dev/null || true)
+
+  for f in "${backups[@]}"; do
+    if [[ -n "${ENV_BACKUP}" && "${f}" == "${ENV_BACKUP}" ]]; then
+      kept=$((kept + 1))
+      continue
+    fi
+    kept=$((kept + 1))
+    if (( kept > ENV_BACKUP_KEEP )); then
+      rm -f -- "${f}" || true
+    fi
+  done
+}
+
+# Fail-fast rollback restore. Every critical step checked explicitly.
+# Does NOT print success unless all verifications passed.
+# Safe to call under set +e — does not depend on set -e.
+restore_previous() {
+  local previous="$1"
+  local url=''
+  local cid=''
+
+  log "Restoring previous image: ${previous}"
+
+  if [[ ! "${previous}" =~ ${IMAGE_RE} ]]; then
+    log "ERROR: previous image failed validation"
+    return 1
+  fi
+
+  if ! ensure_image_available "${previous}" "previous image"; then
+    return 1
+  fi
+
+  if [[ -n "${ENV_BACKUP}" && -f "${ENV_BACKUP}" ]]; then
+    if ! cp -a "${ENV_BACKUP}" "${APP_DIR}/.env"; then
+      log "ERROR: failed to restore .env from backup"
+      return 1
+    fi
+    if ! chmod 600 "${APP_DIR}/.env"; then
+      log "ERROR: failed to set .env mode after restore"
+      return 1
+    fi
+    log "Restored .env from backup"
+  else
+    if ! atomic_set_mehrafarin_image "${APP_DIR}/.env" "${previous}"; then
+      return 1
+    fi
+    log "Rewrote MEHRAFARIN_IMAGE to previous value"
+  fi
+
+  if ! assert_compose_image "${previous}"; then
+    return 1
+  fi
+
+  if ! compose up -d --no-build --force-recreate mehrafarin; then
+    log "ERROR: compose recreate during rollback failed"
+    return 1
+  fi
+
+  cid="$(container_id || true)"
+  if [[ -z "${cid}" ]]; then
+    log "ERROR: mehrafarin container id missing after rollback recreate"
+    return 1
+  fi
+
+  if ! wait_docker_healthy "${cid}"; then
+    return 1
+  fi
+
+  url="$(health_url)"
+  if ! check_http_health "${url}"; then
+    return 1
+  fi
+
+  if ! verify_running_image "${previous}"; then
+    return 1
+  fi
+
+  log "Rollback verification succeeded"
+  return 0
+}
+
+perform_rollback() {
+  local rc=1
+
+  if [[ "${ROLLING_BACK}" -eq 1 ]]; then
+    log "Rollback re-entered; refusing recursive rollback"
+    return 1
+  fi
+  ROLLING_BACK=1
+  SIGNAL_DURING_ROLLBACK=0
+
+  # ERR must not re-enter deploy failure handling mid-rollback.
+  # TERM/INT/HUP: log and continue the current rollback (do not default-terminate).
+  trap - ERR
+  trap 'on_rollback_signal TERM' TERM
+  trap 'on_rollback_signal INT' INT
+  trap 'on_rollback_signal HUP' HUP
+
+  log "DEPLOY FAILED — starting automatic rollback"
+  dump_diagnostics || true
+
+  if [[ -z "${PREVIOUS_IMAGE}" ]]; then
+    log "No previous image recorded; cannot rollback automatically"
+    log "ROLLBACK FAILED — manual intervention required"
+    return 1
+  fi
+
+  if restore_previous "${PREVIOUS_IMAGE}"; then
+    rc=0
+    log "ROLLBACK SUCCEEDED — production restored to previous image"
+    log "Previous image: ${PREVIOUS_IMAGE}"
+    if [[ "${SIGNAL_DURING_ROLLBACK}" -eq 1 ]]; then
+      log "Note: termination signal was received during rollback; verification still completed"
+    fi
+    prune_env_backups || true
+    return 0
+  fi
+
+  log "ROLLBACK FAILED — manual intervention required"
+  if [[ "${SIGNAL_DURING_ROLLBACK}" -eq 1 ]]; then
+    log "Note: termination signal was received during failed rollback"
+  fi
+  return 1
+}
+
+mutation_happened() {
+  # Conservative: true once a mutating operation may have started.
+  [[ "${ENV_MUTATION_STARTED}" -eq 1 || "${SERVICE_MUTATION_STARTED}" -eq 1 ]]
+}
+
+on_rollback_signal() {
+  local sig="$1"
+  SIGNAL_DURING_ROLLBACK=1
+  log "Signal ${sig} received during rollback; continuing current rollback attempt (no re-entry)"
+}
+
+# Single entry for failure/interrupt after production mutation may have started.
+# Always exits non-zero when mutation markers are set, even if rollback succeeded.
+fail_after_mutation_or_exit() {
+  local ec="${1:-1}"
+
+  if [[ "${ROLLING_BACK}" -eq 1 ]]; then
+    # Should be rare (rollback uses on_rollback_signal). Never recursively rollback.
+    SIGNAL_DURING_ROLLBACK=1
+    log "Failure path seen while rollback active; not interrupting rollback"
+    return 0
+  fi
+
+  if mutation_happened; then
+    if [[ "${ROLLBACK_ATTEMPTED}" -eq 0 ]]; then
+      ROLLBACK_ATTEMPTED=1
+      perform_rollback || true
+    else
+      log "Rollback already attempted; not re-running"
+    fi
+    log "Deployment failed. Exiting non-zero (even if rollback succeeded)."
+    exit 1
+  fi
+
+  exit "${ec}"
+}
+
+on_error() {
+  local ec=$?
+  trap - ERR
+  fail_after_mutation_or_exit "${ec}"
+}
+
+on_signal() {
+  local sig="$1"
+  local ec=143
+
+  case "${sig}" in
+    INT) ec=130 ;;
+    TERM) ec=143 ;;
+    HUP) ec=129 ;;
+  esac
+
+  log "Received signal ${sig}"
+  trap - ERR TERM INT HUP
+  fail_after_mutation_or_exit "${ec}"
+}
+
+install_deploy_traps() {
+  trap on_error ERR
+  trap 'on_signal TERM' TERM
+  trap 'on_signal INT' INT
+  trap 'on_signal HUP' HUP
+}
+
+clear_deploy_traps() {
+  trap - ERR TERM INT HUP
+}
+
+main() {
+  require_root
+
+  if [[ "${#}" -ne 1 ]]; then
+    die "usage: deploy-mehrafarin thnhit/mehrafarin@sha256:<64-hex>"
+  fi
+
+  local requested="$1"
+  validate_image "${requested}"
+
+  mkdir -p /var/lock
+  exec 9>"${LOCK_FILE}"
+  if ! flock -n 9; then
+    die "another mehrafarin deployment holds ${LOCK_FILE}"
+  fi
+
+  cd "${APP_DIR}"
+
+  [[ -f "${COMPOSE_FILE}" ]] || die "missing ${APP_DIR}/${COMPOSE_FILE}"
+  [[ -f .env ]] || die "missing ${APP_DIR}/.env"
+
+  # Version control: GitHub Actions always deploys thnhit/mehrafarin@sha256:<digest>
+  # from the release that just pushed that image. MEHRAFARIN_IMAGE in .env is written
+  # by this script — never invent a digest by hand.
+  PREVIOUS_IMAGE="$(read_env_value .env MEHRAFARIN_IMAGE || true)"
+  if [[ -z "${PREVIOUS_IMAGE}" ]]; then
+    log "Bootstrap: MEHRAFARIN_IMAGE not set yet; first deploy will pin the release digest"
+    PREVIOUS_IMAGE=""
+  else
+    validate_image "${PREVIOUS_IMAGE}"
+    if [[ "${PREVIOUS_IMAGE}" == "${requested}" ]]; then
+      log "Requested image already configured: ${requested}"
+      log "Refreshing service to ensure it matches digest..."
+    fi
+  fi
+
+  ENV_BACKUP="${APP_DIR}/.env.deploy-backup.$(date -u +%Y%m%dT%H%M%SZ)"
+  cp -a .env "${ENV_BACKUP}"
+  chmod 600 "${ENV_BACKUP}"
+  chown root:root "${ENV_BACKUP}" 2>/dev/null || true
+  log "Backed up .env to $(basename "${ENV_BACKUP}")"
+
+  install_deploy_traps
+
+  log "Pulling ${requested}"
+  if ! ensure_image_available "${requested}" "requested image"; then
+    die "requested image unavailable"
+  fi
+
+  # Mark before .env rewrite so TERM/HUP cannot skip rollback after partial mutation.
+  ENV_MUTATION_STARTED=1
+  if ! atomic_set_mehrafarin_image "${APP_DIR}/.env" "${requested}"; then
+    die "failed to update MEHRAFARIN_IMAGE"
+  fi
+  log "Updated MEHRAFARIN_IMAGE in .env"
+
+  if ! assert_compose_image "${requested}"; then
+    die "compose image assertion failed"
+  fi
+  log "Compose resolves to requested image"
+
+  log "Recreating service mehrafarin"
+  # Mark before force-recreate so interrupts cannot leave an unverified new release.
+  SERVICE_MUTATION_STARTED=1
+  if ! compose up -d --no-build --force-recreate mehrafarin; then
+    die "compose recreate failed"
+  fi
+
+  local cid
+  cid="$(container_id || true)"
+  [[ -n "${cid}" ]] || die "mehrafarin container id empty after recreate"
+
+  if ! wait_docker_healthy "${cid}"; then
+    die "docker health check failed"
+  fi
+  if ! check_http_health "$(health_url)"; then
+    die "HTTP health check failed"
+  fi
+  if ! verify_running_image "${requested}"; then
+    die "running image verification failed"
+  fi
+
+  # Success path: clear traps before finishing.
+  clear_deploy_traps
+
+  local status health
+  status="$(docker inspect --format='{{.State.Status}}' "${cid}")"
+  health="$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "${cid}")"
+
+  prune_env_backups || true
+
+  log "==== deployment success ===="
+  log "requested: ${requested}"
+  log "previous:  ${PREVIOUS_IMAGE:-none (bootstrap)}"
+  log "container: ${cid}"
+  log "status:    ${status}"
+  log "health:    ${health}"
+  log "backup:    $(basename "${ENV_BACKUP}")"
+  log "==== end ===="
+}
+
+# Allow local unit tests to source functions without executing main.
+if [[ "${BASH_SOURCE[0]-}" == "$0" ]]; then
+  main "$@"
+fi

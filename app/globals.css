@@ -210,6 +210,17 @@ html[lang="fa"] .nav-link {
     inset 0 0 0 1px color-mix(in srgb, var(--color-gold) 28%, transparent);
 }
 
+.portrait-frame-rect {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: clamp(1rem, 2.5vw, 1.75rem);
+  background: var(--color-surface-soft);
+  box-shadow:
+    0 24px 52px color-mix(in srgb, var(--color-text) 12%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--color-gold) 22%, transparent);
+}
+
 .paper-card {
   position: relative;
   background:

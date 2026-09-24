@@ -1,0 +1,36 @@
+# Temporary HTTP-only vhost for first Certbot issuance.
+# Use before ops/nginx/darmanafarin.com (HTTPS) is installed.
+#
+#   sudo cp ops/nginx/darmanafarin.com.bootstrap /etc/nginx/sites-available/darmanafarin.com
+#   sudo ln -sf /etc/nginx/sites-available/darmanafarin.com /etc/nginx/sites-enabled/
+#   sudo nginx -t && sudo systemctl reload nginx
+#   sudo certbot --nginx -d darmanafarin.com -d www.darmanafarin.com
+#   # then replace with the full HTTPS config from ops/nginx/darmanafarin.com
+
+server {
+    listen 80;
+    listen [::]:80;
+
+    server_name darmanafarin.com www.darmanafarin.com;
+    server_tokens off;
+
+    location / {
+        if ($http_next_action != "") {
+            return 404;
+        }
+
+        proxy_pass http://127.0.0.1:2580;
+        proxy_http_version 1.1;
+
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host  $host;
+        proxy_set_header X-Forwarded-Port  $server_port;
+
+        proxy_connect_timeout 5s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+}

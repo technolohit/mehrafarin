@@ -1,0 +1,44 @@
+#!/bin/bash
+# Forced-command SSH wrapper for Mehrafarin production deploys.
+# Installed as /usr/local/bin/mehrafarin-deploy-ssh (root-owned).
+#
+# authorized_keys must restrict the GitHub deploy key to this command only, e.g.:
+#   restrict,command="/usr/local/bin/mehrafarin-deploy-ssh" ssh-ed25519 AAAA... mehrafarin-gha-deploy
+#
+# Accepts ONLY: deploy thnhit/mehrafarin@sha256:<64 lowercase hex>
+set -Eeuo pipefail
+
+readonly PATH='/usr/sbin:/usr/bin:/sbin:/bin'
+export PATH
+umask 077
+
+readonly ALLOWED_RE='^deploy thnhit/mehrafarin@sha256:[0-9a-f]{64}$'
+readonly DEPLOY_BIN='/usr/local/sbin/deploy-mehrafarin'
+readonly SUDO_BIN='/usr/bin/sudo'
+
+cmd="${SSH_ORIGINAL_COMMAND:-}"
+
+if [[ -z "${cmd}" ]]; then
+  printf 'Refused: empty SSH_ORIGINAL_COMMAND (interactive shells are disabled)\n' >&2
+  exit 1
+fi
+
+if [[ ! "${cmd}" =~ ${ALLOWED_RE} ]]; then
+  printf 'Refused: invalid deploy command\n' >&2
+  exit 1
+fi
+
+image="${cmd#deploy }"
+
+if [[ ! -f "${DEPLOY_BIN}" ]]; then
+  printf 'Refused: deploy binary missing\n' >&2
+  exit 1
+fi
+
+if [[ ! -x "${SUDO_BIN}" ]]; then
+  printf 'Refused: sudo missing\n' >&2
+  exit 1
+fi
+
+# Smallest sudo surface: only the root-owned deploy binary (image validated again there).
+exec "${SUDO_BIN}" -- "${DEPLOY_BIN}" "${image}"

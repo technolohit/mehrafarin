@@ -1,0 +1,204 @@
+# Content map — Mehrafarin Kolahdoozan
+# Updated 2026-09-24 after stakeholder intake
+
+version: 2
+updated: 2026-09-24
+locales_supported: [fa, en]
+default_locale: fa
+
+pages:
+  - id: home
+    route: "/{locale}"
+    locales: [fa, en]
+    page_type: hub
+    lifecycle: live_partial
+    audience: prospective_clients
+    primary_intent: professional_orientation
+    secondary_intents: [trust_building, contact_consideration]
+    primary_topic: mehrafarin_kolahdoozan_psychotherapy
+    entities: [PRO-005, PRO-001, PRO-002, PRO-003, PRO-004, PRO-009, PRO-010, PRO-011, PRO-012]
+    user_questions:
+      - Who is Mehrafarin Kolahdoozan?
+      - What is her orientation?
+      - How do I get in touch?
+    required_verified_facts: [PRO-001, PRO-002, PRO-003, PRO-004, PRO-005, PRO-009, PRO-010, PRO-011, PRO-012]
+    prohibited_claims: [SAFE-001, SAFE-002, SAFE-003, SAFE-004, SAFE-005, SAFE-008, SAFE-009]
+    unknown_blockers: []
+    cta: { primary: contact, secondary: about }
+    inbound_internal_links: [nav_brand, footer]
+    outbound_internal_links: [about, services, process, contact]
+    schema_candidate: Person
+    source_requirements:
+      - Docs/project-context/professional-facts.md
+      - Docs/project-context/services.md
+    content_owner: TBD
+    reviewer: TBD
+    last_reviewed: null
+    parity: { fa: required, en: required }
+    content_brief: null
+    draft_path: Docs/content-drafts/home/{locale}/
+    review_status: not_started
+    gate_status: not_started
+    publish_approved: false
+
+  - id: about
+    route: "/{locale}/about"
+    locales: [fa, en]
+    page_type: about
+    lifecycle: draft_ready
+    audience: prospective_clients
+    primary_intent: trust_and_credentials
+    secondary_intents: [orientation_clarity, contact_consideration]
+    primary_topic: about_mehrafarin_kolahdoozan
+    entities: [PRO-005, PRO-001, PRO-002, PRO-003, PRO-004, PRO-009, PRO-010, PRO-011, PRO-012]
+    user_questions:
+      - Who is she professionally?
+      - What orientation does she work within?
+      - Who does she work with?
+    required_verified_facts: [PRO-001, PRO-002, PRO-003, PRO-004, PRO-005, PRO-009, PRO-010, PRO-011, PRO-012]
+    prohibited_claims: [SAFE-001, SAFE-002, SAFE-003, SAFE-008, SAFE-009]
+    unknown_blockers: []
+    cta: { primary: contact, secondary: services }
+    inbound_internal_links: [nav, home_hero, home_about]
+    outbound_internal_links: [services, process, contact]
+    schema_candidate: Person
+    source_requirements:
+      - Docs/project-context/professional-facts.md
+      - Docs/project-context/voice.md
+    content_owner: TBD
+    reviewer: TBD
+    last_reviewed: 2026-09-24
+    parity: { fa: required, en: required }
+    content_brief: Docs/content-briefs/about.md
+    draft_path: Docs/content-drafts/about/{locale}/
+    review_status: PASS
+    gate_status: pending_human
+    publish_approved: false
+
+  - id: services
+    route: "/{locale}/services"
+    locales: [fa, en]
+    page_type: service
+    lifecycle: draft_ready
+    audience: prospective_clients
+    primary_intent: understand_offerings
+    secondary_intents: [consideration, contact]
+    primary_topic: psychotherapy_services
+    entities: [PRO-005, SVC-001, SVC-002, SVC-003, SVC-004, PRO-010, PRO-012]
+    user_questions:
+      - What services are offered?
+      - Is work online?
+      - Who is it for?
+    required_verified_facts: [SVC-001, SVC-002, SVC-003, SVC-004, PRO-010, PRO-011, PRO-012, PRO-005]
+    prohibited_claims: [SAFE-001, SAFE-003, SAFE-008, SAFE-009]
+    unknown_blockers: []
+    cta: { primary: contact, secondary: process }
+    inbound_internal_links: [nav, home_services]
+    outbound_internal_links: [process, contact, about]
+    schema_candidate: null
+    source_requirements:
+      - Docs/project-context/services.md
+      - Docs/project-context/professional-facts.md
+    content_owner: TBD
+    reviewer: TBD
+    last_reviewed: 2026-09-24
+    parity: { fa: required, en: required }
+    content_brief: Docs/content-briefs/services.md
+    draft_path: Docs/content-drafts/services/{locale}/
+    review_status: PASS
+    gate_status: pending_human
+    publish_approved: false
+
+  - id: process
+    route: "/{locale}/process"
+    locales: [fa, en]
+    page_type: process
+    lifecycle: draft_ready
+    audience: prospective_clients
+    primary_intent: reduce_uncertainty
+    secondary_intents: [first_contact_expectations]
+    primary_topic: how_online_work_begins
+    entities: [PRO-005, PRO-012, PRO-014, BUS-013]
+    user_questions:
+      - How do I start?
+      - What is a session like in practical terms?
+    required_verified_facts: [PRO-012, PRO-014, PRO-011, BUS-005, BUS-009, BUS-013]
+    prohibited_claims: [SAFE-005, SAFE-001, SAFE-009]
+    unknown_blockers: []
+    cta: { primary: contact, secondary: services }
+    inbound_internal_links: [nav, home_process]
+    outbound_internal_links: [contact, services]
+    schema_candidate: null
+    source_requirements:
+      - Docs/project-context/professional-facts.md
+    content_owner: TBD
+    reviewer: TBD
+    last_reviewed: 2026-09-24
+    parity: { fa: required, en: required }
+    content_brief: Docs/content-briefs/process.md
+    draft_path: Docs/content-drafts/process/{locale}/
+    review_status: PASS
+    gate_status: pending_human
+    publish_approved: false
+
+  - id: contact
+    route: "/{locale}/contact"
+    locales: [fa, en]
+    page_type: contact
+    lifecycle: draft_ready
+    audience: prospective_clients
+    primary_intent: initiate_contact
+    secondary_intents: [channel_clarity]
+    primary_topic: contact_mehrafarin
+    entities: [PRO-005, BUS-013, BUS-006, BUS-007, PRO-011]
+    user_questions:
+      - How can I reach her?
+      - In what language is therapy offered?
+    required_verified_facts: [PRO-005, BUS-013, PRO-011, PRO-012]
+    prohibited_claims: [SAFE-004, SAFE-007, SAFE-008]
+    unknown_blockers: []
+    cta: { primary: email_or_telegram, secondary: null }
+    inbound_internal_links: [nav, home_hero, home_contact_cta]
+    outbound_internal_links: [about, process]
+    schema_candidate: null
+    source_requirements:
+      - Docs/project-context/professional-facts.md
+    content_owner: TBD
+    reviewer: TBD
+    last_reviewed: 2026-09-24
+    parity: { fa: required, en: required }
+    content_brief: Docs/content-briefs/contact.md
+    draft_path: Docs/content-drafts/contact/{locale}/
+    review_status: PASS
+    gate_status: pending_human_and_handles
+    publish_approved: false
+
+  - id: blog
+    route: "/{locale}/blog"
+    locales: [fa, en]
+    page_type: editorial
+    lifecycle: noindex_placeholder
+    audience: deferred
+    primary_intent: deferred_editorial
+    secondary_intents: []
+    primary_topic: insights_deferred
+    entities: [PRO-005]
+    user_questions: []
+    required_verified_facts: [PRO-005]
+    prohibited_claims: [SAFE-001, SAFE-003]
+    unknown_blockers: []
+    cta: { primary: null, secondary: home }
+    inbound_internal_links: [nav]
+    outbound_internal_links: [home]
+    schema_candidate: null
+    source_requirements:
+      - Docs/project-context/site-architecture.md
+    content_owner: TBD
+    reviewer: TBD
+    last_reviewed: null
+    parity: { fa: required, en: required }
+    content_brief: null
+    draft_path: Docs/content-drafts/blog/{locale}/
+    review_status: deferred
+    gate_status: deferred
+    publish_approved: false

@@ -1,0 +1,44 @@
+---
+description: >-
+  Always-on project identity and pointers to canonical Project Context for
+  Mehrafarin Kolahdoozan. Keep small; detailed facts live under Docs/project-context/.
+alwaysApply: true
+---
+
+# Project Core
+
+## Identity
+- Project: Mehrafarin Kolahdoozan — bilingual psychotherapist portfolio website
+- Project type: Next.js professional website (FA default, EN parallel)
+- Primary domain: UNKNOWN until [BUS-011] is verified
+- Languages / markets: Site locales `fa` + `en`; therapy languages UNKNOWN ([PRO-011])
+
+## Canonical context
+- Project Context: `Docs/project-context/project-context.md`
+- SEO / GEO profile: `Docs/project-context/seo-geo-profile.md`
+- Professional facts: `Docs/project-context/professional-facts.md`
+- Services: `Docs/project-context/services.md`
+- Voice: `Docs/project-context/voice.md`
+- Guardrails: `Docs/project-context/content-guardrails.md`
+- Site architecture: `Docs/project-context/site-architecture.md`
+- Content map: `Docs/project-context/content-map.yaml`
+
+Before assuming business facts, claims, ICP, competitors, conversion goals, analytics status, or legal constraints, read the canonical Project Context and related Docs files. Prefer those over README drift or planning chats.
+
+## Source-of-truth pointers
+- Editorial context: `Docs/project-context/`
+- Runtime published facts/nulls: `content/profile.ts`, `content/fa/`, `content/en/`
+- Stakeholder intake: `Docs/project-context/stakeholder-questionnaire.md`
+
+## Safety constraints
+- Assert only Fact IDs in state `VERIFIED`.
+- Never infer or invent `UNKNOWN` professional/business facts.
+- Never publish `PROVISIONAL` offerings as final.
+- Hard-reject `FORBIDDEN` claims (outcome guarantees, invented credentials/specialties, unverified contact/fees).
+- YMYL caution: mental-health content; medical/educational claims need external sources (see guardrails)—profile facts alone are not enough.
+- No condition/specialty landing-page expansion without separate research and professional-scope approval.
+- Do not modify `app/`, production dictionaries, routes, sitemap, robots, metadata, schema, forms, styles, or package/lock files unless the current phase explicitly approves that implementation work.
+- Do not install full claude-blog or create content agents unless explicitly approved.
+
+## Out of scope for this rule
+SEO research workflows, framework API conventions, design-system taste, security audits, and long-form business documentation belong in other rules or `Docs/project-context/`, not here.

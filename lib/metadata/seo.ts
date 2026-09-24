@@ -3,7 +3,7 @@ import type { Locale } from "@/lib/i18n/config";
 import { locales } from "@/lib/i18n/config";
 import { localePath } from "@/lib/i18n/paths";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:2580";
 
 type BuildMetadataInput = {
   locale: Locale;

@@ -61,6 +61,60 @@ export type HomeContent = {
   };
 };
 
+/** Template may include {{services}}, {{process}}, {{contact}}, {{about}} */
+export type LinkedCta = {
+  template: string;
+  labels: Partial<Record<"services" | "process" | "contact" | "about", string>>;
+};
+
+export type AboutPageContent = {
+  meta: { title: string; description: string };
+  title: string;
+  intro: string;
+  orientation: { title: string; paragraphs: string[] };
+  clients: { title: string; body: string };
+  format: { title: string; body: string };
+  cta: LinkedCta;
+  imageAlt: string;
+};
+
+export type ServicesPageContent = {
+  meta: { title: string; description: string };
+  title: string;
+  intro: string;
+  listTitle: string;
+  items: { icon: ServiceIconId; title: string; description: string }[];
+  audience: { title: string; body: string };
+  language: { title: string; body: string };
+  cta: LinkedCta;
+};
+
+export type ProcessPageContent = {
+  meta: { title: string; description: string };
+  title: string;
+  intro: string;
+  steps: { title: string; paragraphs: string[] }[];
+  fees: { title: string; body: string };
+  cta: LinkedCta;
+};
+
+export type ContactPageContent = {
+  meta: { title: string; description: string };
+  title: string;
+  intro: string;
+  channelsTitle: string;
+  /** Shown while exact email/Telegram remain unpublished */
+  channelsPending: string;
+  channelLabels: { email: string; telegram: string };
+  beforeTitle: string;
+  beforeBody: string;
+  instagramTitle: string;
+  instagramHandle: string;
+  linksTitle: string;
+  linkAbout: string;
+  linkProcess: string;
+};
+
 export type Dictionary = {
   brand: string;
   brandSubtitle: string;
@@ -84,6 +138,12 @@ export type Dictionary = {
     mainNavigation: string;
   };
   home: HomeContent;
+  pages: {
+    about: AboutPageContent;
+    services: ServicesPageContent;
+    process: ProcessPageContent;
+    contact: ContactPageContent;
+  };
   placeholders: {
     pageComing: string;
   };

@@ -42,7 +42,7 @@ export function Hero({ locale, content }: HeroProps) {
         className="pointer-events-none absolute inset-y-0 start-0 z-[1] w-full max-w-none bg-[linear-gradient(to_inline_end,color-mix(in_srgb,var(--color-bg)_92%,transparent)_0%,color-mix(in_srgb,var(--color-bg)_70%,transparent)_38%,transparent_72%)] md:w-[60%]"
       />
 
-      <Container className="relative z-[2] grid items-center gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-12">
+      <Container className="relative z-[2] grid items-center gap-10 sm:gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-10 xl:gap-14">
         <FadeIn className="order-2 max-w-xl space-y-6 lg:order-1" delay={0.05}>
           <p className="text-sm font-semibold tracking-[0.14em] text-[var(--color-accent)] uppercase">
             {content.eyebrow}
@@ -68,10 +68,12 @@ export function Hero({ locale, content }: HeroProps) {
           y={36}
         >
           <BlobPortrait
-            src="/images/portrait/mehrafarin-kolahdoozan-portrait.webp"
+            src="/images/portrait/mehrafarin-kolahdoozan-hero.webp"
             alt={content.imageAlt}
             priority
-            className="w-[min(100%,26rem)] lg:w-[min(100%,28rem)]"
+            objectPosition="center 28%"
+            sizes="(max-width: 640px) 92vw, (max-width: 1024px) 70vw, 40vw"
+            className="w-[min(100%,30rem)] sm:w-[min(100%,34rem)] lg:w-[min(100%,36rem)]"
           />
         </FadeIn>
       </Container>
