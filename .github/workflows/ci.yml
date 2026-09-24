@@ -117,7 +117,12 @@ jobs:
           test "$health_code" = "200"
           grep -Eq '"ok"[[:space:]]*:[[:space:]]*true' /tmp/mehrafarin-health.json
 
-          home_code=$(curl -sS --max-time 10 -o /dev/null -w "%{http_code}" "http://127.0.0.1:2580/")
+          # Locale middleware redirects / → /fa; smoke the real homepage.
+          redir_code=$(curl -sS --max-time 5 -o /dev/null -w "%{http_code}" "http://127.0.0.1:2580/")
+          echo "Apex redirect HTTP status: ${redir_code}"
+          test "$redir_code" = "307"
+
+          home_code=$(curl -sS --max-time 10 -o /dev/null -w "%{http_code}" "http://127.0.0.1:2580/fa")
           echo "Homepage HTTP status: ${home_code}"
           test "$home_code" = "200"
 
