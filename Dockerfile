@@ -40,7 +40,9 @@ ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 ENV NEXT_PUBLIC_SITE_URL=https://darmanafarin.com
 
+# Upgrade first so Trivy sees Debian security fixes (e.g. perl-base CVEs).
 RUN apt-get update \
+  && apt-get upgrade -y --no-install-recommends \
   && apt-get install -y --no-install-recommends ca-certificates \
   && rm -rf /var/lib/apt/lists/* \
   && groupadd --system --gid 1001 nodejs \
