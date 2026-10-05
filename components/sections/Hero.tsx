@@ -1,6 +1,7 @@
 import type { Locale } from "@/lib/i18n/config";
 import { localePath } from "@/lib/i18n/paths";
 import type { HomeContent } from "@/content/types";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { ArrowLink } from "@/components/ui/ArrowLink";
 import { Button } from "@/components/ui/Button";
 import { BlobPortrait } from "@/components/ui/BlobPortrait";
@@ -44,6 +45,7 @@ export function Hero({ locale, content }: HeroProps) {
 
       <Container className="relative z-[2] grid items-center gap-10 sm:gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-10 xl:gap-14">
         <FadeIn className="order-2 max-w-xl space-y-6 lg:order-1" delay={0.05}>
+          <BrandLogo size="lg" priority />
           <p className="text-sm font-semibold tracking-[0.14em] text-[var(--color-accent)] uppercase">
             {content.eyebrow}
           </p>

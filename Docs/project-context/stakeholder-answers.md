@@ -27,7 +27,7 @@ Do not publish fees → [BUS-005] VERIFIED policy; no Fees page ([SAFE-005])
 Typical duration 45 minutes → [PRO-014] VERIFIED. No cancellation-policy content → [BUS-009] VERIFIED omit policy
 
 ## Q10 — Contact
-Channel types: Email + Telegram → [BUS-013] VERIFIED. Exact email/Telegram identity UNKNOWN ([BUS-003], [BUS-014])
+Channel types: Email + Telegram → [BUS-013] VERIFIED. Exact email `mehrafarinkolahdoozan@gmail.com` → [BUS-003] VERIFIED. Exact Telegram `@Mehrafarin_kolahdoozan` → [BUS-014] VERIFIED.
 
 ## Q11 — About
 No personal biography. Professional introduction only from verified facts + orientation + clients + Persian online sessions.

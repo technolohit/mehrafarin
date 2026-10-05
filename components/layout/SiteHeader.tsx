@@ -5,6 +5,7 @@ import { useEffect, useId, useState } from "react";
 import type { Locale } from "@/lib/i18n/config";
 import { localePath, navItems } from "@/lib/i18n/paths";
 import type { Dictionary } from "@/content/types";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { LanguageSwitcher } from "@/components/navigation/LanguageSwitcher";
 import { Container } from "@/components/ui/Container";
 
@@ -35,12 +36,18 @@ export function SiteHeader({ locale, dictionary }: SiteHeaderProps) {
   return (
     <header className="sticky top-0 z-40 bg-[color-mix(in_srgb,var(--color-bg)_82%,transparent)] backdrop-blur-md">
       <Container className="grid min-h-[4.75rem] grid-cols-[1fr_auto] items-center gap-4 py-3 md:min-h-[5.25rem] lg:grid-cols-[1fr_auto_1fr]">
-        <Link href={localePath(locale)} className="justify-self-start">
-          <span className="display-title block text-[1.2rem] leading-none md:text-[1.35rem]">
-            {dictionary.brand}
-          </span>
-          <span className="mt-1 block text-[0.72rem] tracking-[0.14em] text-[var(--color-muted)] uppercase md:text-[0.75rem]">
-            {dictionary.brandSubtitle}
+        <Link
+          href={localePath(locale)}
+          className="flex items-center gap-3 justify-self-start"
+        >
+          <BrandLogo size="md" priority className="md:h-12 md:w-12" />
+          <span className="min-w-0">
+            <span className="display-title block text-[1.2rem] leading-none md:text-[1.35rem]">
+              {dictionary.brand}
+            </span>
+            <span className="mt-1 block text-[0.72rem] tracking-[0.14em] text-[var(--color-muted)] uppercase md:text-[0.75rem]">
+              {dictionary.brandSubtitle}
+            </span>
           </span>
         </Link>
 

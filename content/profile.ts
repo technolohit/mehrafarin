@@ -24,20 +24,33 @@ export const profile = {
   },
   licenseNumber: "22018",
   username: "mehrafarin_kolahdoozan",
-  email: null as string | null,
+  email: "mehrafarinkolahdoozan@gmail.com",
+  /** Public Telegram username without @ */
+  telegram: "Mehrafarin_kolahdoozan",
   phone: null as string | null,
   location: null as string | null,
   sessionFee: null as string | null,
   social: {
-    instagram: null as string | null,
+    instagram: "mehrafarin_kolahdoozan",
   },
 } as const;
 
 export type ContactFields = {
   email: string | null;
+  telegram: string | null;
   phone: string | null;
   location: string | null;
 };
+
+export function getTelegramUrl(handle: string = profile.telegram): string {
+  return `https://t.me/${handle}`;
+}
+
+export function getInstagramUrl(
+  handle: string = profile.social.instagram ?? profile.username,
+): string {
+  return `https://www.instagram.com/${handle}/`;
+}
 
 export function getLocalizedName(locale: Locale): string {
   return profile.name[locale];

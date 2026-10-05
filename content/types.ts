@@ -103,16 +103,26 @@ export type ContactPageContent = {
   title: string;
   intro: string;
   channelsTitle: string;
-  /** Shown while exact email/Telegram remain unpublished */
-  channelsPending: string;
+  channelAction: string;
   channelLabels: { email: string; telegram: string };
   beforeTitle: string;
   beforeBody: string;
+  beforeHints: { online: string; language: string; message: string };
   instagramTitle: string;
   instagramHandle: string;
+  instagramAction: string;
   linksTitle: string;
   linkAbout: string;
   linkProcess: string;
+};
+
+export type BlogIndexContent = {
+  meta: { title: string; description: string };
+  title: string;
+  intro: string;
+  readMore: string;
+  backToBlog: string;
+  publishedLabel: string;
 };
 
 export type Dictionary = {
@@ -143,6 +153,7 @@ export type Dictionary = {
     services: ServicesPageContent;
     process: ProcessPageContent;
     contact: ContactPageContent;
+    blog: BlogIndexContent;
   };
   placeholders: {
     pageComing: string;

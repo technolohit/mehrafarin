@@ -29,7 +29,7 @@
 - Local vs national vs international: Online Persian-language practice (geography UNKNOWN)
 
 ## Conversion
-- Primary conversion: Contact via Email or Telegram channel types ([BUS-013]; exact addresses UNKNOWN)
+- Primary conversion: Contact via Email or Telegram ([BUS-013]; addresses [BUS-003], [BUS-014])
 - Secondary conversions: Learn more (About), understand services/process
 - Important forms/CTAs: Structural Contact page; exact handles TBD; avoid soliciting clinical detail ([SAFE-007])
 - Sales/contact flow: Contact → conversation about suitability → ongoing online sessions (45 minutes typical [PRO-014]); no public fees ([BUS-005])

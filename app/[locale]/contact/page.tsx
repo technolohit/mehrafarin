@@ -21,8 +21,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description: meta.description,
       path: "/contact",
     }),
-    // Exact email/Telegram still UNKNOWN — keep out of search indexes until publishable.
-    robots: { index: false, follow: true },
   };
 }
 

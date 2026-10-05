@@ -1,6 +1,7 @@
 import type { Locale } from "@/lib/i18n/config";
 import { localePath } from "@/lib/i18n/paths";
 import type { HomeContent } from "@/content/types";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { Button } from "@/components/ui/Button";
 import { Container } from "@/components/ui/Container";
 
@@ -14,6 +15,7 @@ export function ContactCta({ locale, content }: ContactCtaProps) {
     <section className="section-space">
       <Container className="flex flex-col items-start justify-between gap-8 rounded-[var(--radius-lg)] bg-[var(--color-surface-elevated)] px-8 py-12 md:flex-row md:items-center md:px-12 md:py-14">
         <div className="max-w-xl space-y-3">
+          <BrandLogo size="sm" />
           <h2 className="display-title text-[clamp(1.85rem,3.2vw,2.7rem)]">
             {content.title}
           </h2>

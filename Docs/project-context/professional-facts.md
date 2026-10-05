@@ -29,7 +29,7 @@ States: `VERIFIED` | `UNKNOWN` | `PROVISIONAL` | `FORBIDDEN`
 
 - [BUS-001][UNKNOWN] Practice city (do not invent; online-only practice)
 - [BUS-002][UNKNOWN] Practice country / jurisdiction
-- [BUS-003][UNKNOWN] Exact public email address (channel type approved: see [BUS-013])
+- [BUS-003][VERIFIED] Exact public email address: `mehrafarinkolahdoozan@gmail.com`
 - [BUS-004][UNKNOWN] Public contact phone (not an approved primary channel in intake)
 - [BUS-005][VERIFIED] Fees are not published on the website (no Fees page; no prices)
 - [BUS-006][VERIFIED] Instagram exists; public reference handle aligns with [BUS-007] `mehrafarin_kolahdoozan` (exact profile URL not separately verified beyond handle)
@@ -39,8 +39,8 @@ States: `VERIFIED` | `UNKNOWN` | `PROVISIONAL` | `FORBIDDEN`
 - [BUS-010][UNKNOWN] Contact-form field set, retention, and privacy requirements
 - [BUS-011][UNKNOWN] Production canonical domain / `NEXT_PUBLIC_SITE_URL`
 - [BUS-012][UNKNOWN] Legal entity / trading name for footers and privacy notices
-- [BUS-013][VERIFIED] Approved public contact channel *types*: Email and Telegram (specific addresses/usernames for those channels: UNKNOWN until supplied)
-- [BUS-014][UNKNOWN] Exact Telegram username / URL
+- [BUS-013][VERIFIED] Approved public contact channel *types*: Email and Telegram
+- [BUS-014][VERIFIED] Exact Telegram username: `Mehrafarin_kolahdoozan` (public URL: `https://t.me/Mehrafarin_kolahdoozan`)
 
 ## Safety / forbidden claims
 
@@ -56,5 +56,5 @@ States: `VERIFIED` | `UNKNOWN` | `PROVISIONAL` | `FORBIDDEN`
 
 ## Notes
 
-- Runtime mirrors still null for unpublished contact/fee fields until an implementation phase updates `content/profile.ts`.
+- Runtime mirrors contact channels in `content/profile.ts` for email and Telegram ([BUS-003], [BUS-014]). Remaining nulls: phone, location, fees.
 - Evidence class for rows here: **professional / business facts**. Medical/educational explanations of Lacanian/psychoanalytic theory need external sources or must stay as practitioner framing only — see `content-guardrails.md`.

@@ -177,28 +177,32 @@ pages:
     route: "/{locale}/blog"
     locales: [fa, en]
     page_type: editorial
-    lifecycle: noindex_placeholder
-    audience: deferred
-    primary_intent: deferred_editorial
-    secondary_intents: []
-    primary_topic: insights_deferred
-    entities: [PRO-005]
-    user_questions: []
-    required_verified_facts: [PRO-005]
+    lifecycle: live_editorial
+    audience: prospective_clients
+    primary_intent: orientation_and_process_clarity
+    secondary_intents: [trust, contact_support]
+    primary_topic: insights
+    entities: [PRO-005, PRO-009, PRO-011, PRO-012, PRO-014, BUS-013]
+    user_questions:
+      - How does online therapy in Persian begin?
+      - What does analytical orientation mean here?
+      - How is consultation different from ongoing analytical work?
+    required_verified_facts: [PRO-005, PRO-009, PRO-010, PRO-011, PRO-012, PRO-014, BUS-013, SVC-002, SVC-003]
     prohibited_claims: [SAFE-001, SAFE-003]
     unknown_blockers: []
-    cta: { primary: null, secondary: home }
+    cta: { primary: contact, secondary: process }
     inbound_internal_links: [nav]
-    outbound_internal_links: [home]
+    outbound_internal_links: [about, services, process, contact]
     schema_candidate: null
     source_requirements:
       - Docs/project-context/site-architecture.md
+      - Docs/project-context/content-guardrails.md
     content_owner: TBD
     reviewer: TBD
-    last_reviewed: null
+    last_reviewed: 2026-10-05
     parity: { fa: required, en: required }
     content_brief: null
-    draft_path: Docs/content-drafts/blog/{locale}/
-    review_status: deferred
-    gate_status: deferred
-    publish_approved: false
+    draft_path: content/blog/posts.ts
+    review_status: draft_in_runtime
+    gate_status: pending_human_review
+    publish_approved: true

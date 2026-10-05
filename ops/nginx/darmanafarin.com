@@ -1,12 +1,17 @@
 # Canonical HTTPS host — darmanafarin.com (Mehrafarin)
-# Upstream: docker compose binds 127.0.0.1:2580 → container :3000
+# Upstream: 127.0.0.1:2580 → container :3000
 #
-# Prerequisites:
-#   1) Place this file at /etc/nginx/sites-available/darmanafarin.com
-#   2) Issue certs (see ops/deploy/README.md), then enable + reload nginx
-#   3) Cloudflare SSL/TLS mode: Full (strict)
+# Security posture:
+# - Keep the app container read_only in compose (do not weaken it for log noise).
+# - Reject known scanner/probe paths here so they never reach Next.js.
+# - Cloudflare SSL/TLS: Full (strict)
+#
+# Install (replaces Certbot-mangled bootstrap):
+#   sudo cp ops/nginx/darmanafarin.com /etc/nginx/sites-available/darmanafarin.com
+#   sudo ln -sf /etc/nginx/sites-available/darmanafarin.com /etc/nginx/sites-enabled/
+#   sudo nginx -t && sudo systemctl reload nginx
 
-# Canonical HTTPS host
+# Canonical HTTPS apex
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
@@ -22,9 +27,28 @@ server {
     include /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
+    # Baseline browser/network hardening (public marketing site).
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+
+    # --- Probe / scanner denylist (never proxy to Node) ---
+    location ~* ^/(\.env|\.git|\.aws|\.DS_Store) {
+        return 404;
+    }
+    location ~* \.(php|asp|aspx|jsp|cgi)$ {
+        return 404;
+    }
+    location ~* ^/(wp-admin|wp-login\.php|xmlrpc\.php|phpmyadmin|adminer|cgi-bin|vendor/phpunit) {
+        return 404;
+    }
+    location ~* ^/(login\.action|trace\.axd|config\.json|info\.php|actuator|server-status|server-info)(?:$|/) {
+        return 404;
+    }
+
     location / {
         # This site does not use Next.js Server Actions.
-        # Reject automated probes carrying forged Next-Action headers.
         if ($http_next_action != "") {
             return 404;
         }
@@ -69,5 +93,12 @@ server {
     server_name darmanafarin.com www.darmanafarin.com;
     server_tokens off;
 
-    return 301 https://darmanafarin.com$request_uri;
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/www/html;
+        allow all;
+    }
+
+    location / {
+        return 301 https://darmanafarin.com$request_uri;
+    }
 }

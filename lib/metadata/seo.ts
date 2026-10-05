@@ -10,6 +10,10 @@ type BuildMetadataInput = {
   title: string;
   description: string;
   path?: string;
+  image?: {
+    url: string;
+    alt: string;
+  };
 };
 
 export function buildPageMetadata({
@@ -17,11 +21,17 @@ export function buildPageMetadata({
   title,
   description,
   path = "",
+  image,
 }: BuildMetadataInput): Metadata {
   const canonicalPath = localePath(locale, path);
   const languages = Object.fromEntries(
     locales.map((item) => [item, localePath(item, path)]),
   );
+  const imageUrl = image
+    ? image.url.startsWith("http")
+      ? image.url
+      : `${siteUrl}${image.url}`
+    : undefined;
 
   return {
     title,
@@ -39,6 +49,16 @@ export function buildPageMetadata({
       locale: locale === "fa" ? "fa_IR" : "en_US",
       type: "website",
       url: `${siteUrl}${canonicalPath}`,
+      ...(imageUrl
+        ? {
+            images: [
+              {
+                url: imageUrl,
+                alt: image?.alt,
+              },
+            ],
+          }
+        : {}),
     },
   };
 }

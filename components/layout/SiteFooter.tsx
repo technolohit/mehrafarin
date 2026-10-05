@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import type { Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/content/types";
-import { profile } from "@/content/profile";
+import { getTelegramUrl, profile } from "@/content/profile";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { LanguageSwitcher } from "@/components/navigation/LanguageSwitcher";
 import { Container } from "@/components/ui/Container";
 
@@ -36,27 +37,36 @@ export function SiteFooter({ locale, dictionary }: SiteFooterProps) {
   return (
     <footer className="bg-[var(--color-footer)] text-[var(--color-on-dark)]">
       <Container className="flex flex-col gap-8 py-10 md:flex-row md:items-center md:justify-between md:py-8">
-        <div className="space-y-2">
-          <p className="display-title text-[1.2rem] text-[var(--color-on-dark)]">
-            {dictionary.brand}
-          </p>
-          <p className="text-sm text-[color-mix(in_srgb,var(--color-on-dark)_75%,transparent)]">
-            {dictionary.footer.descriptor}
-          </p>
+        <div className="flex items-start gap-3">
+          <BrandLogo size="md" className="mt-0.5" />
+          <div className="space-y-2">
+            <p className="display-title text-[1.2rem] text-[var(--color-on-dark)]">
+              {dictionary.brand}
+            </p>
+            <p className="text-sm text-[color-mix(in_srgb,var(--color-on-dark)_75%,transparent)]">
+              {dictionary.footer.descriptor}
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-x-8 gap-y-4">
           <MetaItem label="ID">
             <p>{license}</p>
           </MetaItem>
-          {!profile.email && !profile.phone && !profile.location ? (
-            <MetaItem label="@">
-              <p>{dictionary.footer.contactPending}</p>
-            </MetaItem>
-          ) : null}
           {profile.email ? (
             <MetaItem label="@">
               <a href={`mailto:${profile.email}`}>{profile.email}</a>
+            </MetaItem>
+          ) : null}
+          {profile.telegram ? (
+            <MetaItem label="TG">
+              <a
+                href={getTelegramUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                @{profile.telegram}
+              </a>
             </MetaItem>
           ) : null}
           {profile.phone ? (
@@ -67,6 +77,14 @@ export function SiteFooter({ locale, dictionary }: SiteFooterProps) {
           {profile.location ? (
             <MetaItem label="⌖">
               <p>{profile.location}</p>
+            </MetaItem>
+          ) : null}
+          {!profile.email &&
+          !profile.telegram &&
+          !profile.phone &&
+          !profile.location ? (
+            <MetaItem label="@">
+              <p>{dictionary.footer.contactPending}</p>
             </MetaItem>
           ) : null}
         </div>

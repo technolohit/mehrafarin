@@ -15,7 +15,7 @@ Authority skill for future IA revisions: TechnoloHit `site-architecture`.
 | Services | **KEEP** | Single services page; no specialty landers |
 | Process | **KEEP** | Includes first-session narrative; fees only as section after VERIFIED facts |
 | Contact | **KEEP** | Primary conversion; form after privacy rules |
-| Blog / Insights | **KEEP AS DEFERRED EDITORIAL SURFACE** | Route may remain; no posts until editorial workflow; treat as non-substantive until then |
+| Blog / Insights | **KEEP — initial editorial set live** | Three orientation/process notes; no condition landers |
 
 ## Candidate page decisions
 

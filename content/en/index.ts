@@ -129,7 +129,7 @@ const en: Dictionary = {
     },
     contactCta: {
       title: "If you would like to begin a conversation",
-      body: "You can reach out by email or Telegram. Details are on the contact page as they become available.",
+      body: "You can reach out by email or Telegram. Details are on the contact page.",
       cta: "Go to contact",
     },
   },
@@ -271,8 +271,7 @@ const en: Dictionary = {
       title: "Contact",
       intro: "You can reach Mehrafarin by email or Telegram.",
       channelsTitle: "Contact channels",
-      channelsPending:
-        "Exact email and Telegram details will appear here once they are ready to publish.",
+      channelAction: "Send a message",
       channelLabels: {
         email: "Email",
         telegram: "Telegram",
@@ -280,11 +279,30 @@ const en: Dictionary = {
       beforeTitle: "Before you write",
       beforeBody:
         "Sessions are online. Therapy itself is conducted in Persian (Farsi); this English page is for information and contact. A short first message is enough.",
+      beforeHints: {
+        online: "Online sessions",
+        language: "Therapy language: Persian",
+        message: "A short first message is enough",
+      },
       instagramTitle: "Instagram",
       instagramHandle: "mehrafarin_kolahdoozan",
-      linksTitle: "Links",
+      instagramAction: "View profile",
+      linksTitle: "Continue exploring",
       linkAbout: "About",
       linkProcess: "Process",
+    },
+    blog: {
+      meta: {
+        title: "Insights | Mehrafarin Kolahdoozan",
+        description:
+          "Short notes on starting online psychotherapy in Persian, analytical orientation, and the difference between consultation and ongoing analytical work.",
+      },
+      title: "Insights",
+      intro:
+        "A few short notes on orientation, how contact begins, and practical differences — without promising outcomes.",
+      readMore: "Read more",
+      backToBlog: "Back to insights",
+      publishedLabel: "Published",
     },
   },
   placeholders: {

@@ -221,6 +221,13 @@ html[lang="fa"] .nav-link {
     inset 0 0 0 1px color-mix(in srgb, var(--color-gold) 22%, transparent);
 }
 
+.blog-media {
+  background: var(--color-surface-soft);
+  box-shadow:
+    0 22px 48px color-mix(in srgb, var(--color-text) 10%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--color-gold) 16%, transparent);
+}
+
 .paper-card {
   position: relative;
   background:
