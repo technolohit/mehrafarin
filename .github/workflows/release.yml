@@ -70,7 +70,7 @@ jobs:
             proceed="true"
 
           elif [[ "${EVENT_NAME}" == "workflow_run" ]]; then
-            trigger="automatic-after-ci"
+            trigger="automatic-ci-success"
 
             if [[ "${WR_CONCLUSION}" != "success" ]]; then
               skip_reason="Mehrafarin CI conclusion was '${WR_CONCLUSION}' (required: success). Release/deploy only run after a green CI on a push to main."
