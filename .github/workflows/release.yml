@@ -49,6 +49,7 @@ jobs:
           proceed="false"
           trigger="none"
           target_sha=""
+          skip_reason=""
 
           current_main_sha() {
             curl -fsS \
@@ -69,18 +70,23 @@ jobs:
             proceed="true"
 
           elif [[ "${EVENT_NAME}" == "workflow_run" ]]; then
-            trigger="automatic-ci-success"
+            trigger="automatic-after-ci"
 
             if [[ "${WR_CONCLUSION}" != "success" ]]; then
-              echo "Skipping automatic release: CI conclusion is '${WR_CONCLUSION}' (not success)."
+              skip_reason="Mehrafarin CI conclusion was '${WR_CONCLUSION}' (required: success). Release/deploy only run after a green CI on a push to main."
+              echo "Skipping automatic release: ${skip_reason}"
             elif [[ "${WR_EVENT}" != "push" ]]; then
-              echo "Skipping automatic release: triggering CI event was '${WR_EVENT}' (not push)."
+              skip_reason="triggering CI event was '${WR_EVENT}' (required: push)."
+              echo "Skipping automatic release: ${skip_reason}"
             elif [[ "${WR_HEAD_BRANCH}" != "main" ]]; then
-              echo "Skipping automatic release: CI head branch was '${WR_HEAD_BRANCH}' (not main)."
+              skip_reason="CI head branch was '${WR_HEAD_BRANCH}' (required: main)."
+              echo "Skipping automatic release: ${skip_reason}"
             elif [[ "${WR_HEAD_REPO}" != "${THIS_REPO}" ]]; then
-              echo "Skipping automatic release: CI head repository '${WR_HEAD_REPO}' is not '${THIS_REPO}'."
+              skip_reason="CI head repository '${WR_HEAD_REPO}' is not '${THIS_REPO}'."
+              echo "Skipping automatic release: ${skip_reason}"
             elif [[ -n "${WR_REPO_ID}" && "${WR_REPO_ID}" != "${THIS_REPO_ID}" ]]; then
-              echo "Skipping automatic release: workflow_run repository id mismatch."
+              skip_reason="workflow_run repository id mismatch."
+              echo "Skipping automatic release: ${skip_reason}"
             elif [[ ! "${WR_HEAD_SHA}" =~ ^[0-9a-f]{40,64}$ ]]; then
               echo "::error::Invalid workflow_run head_sha."
               exit 1
@@ -92,9 +98,8 @@ jobs:
                 exit 1
               fi
               if [[ "${target_sha}" != "${current_main}" ]]; then
-                echo "Skipping automatic release: tested commit is no longer current main HEAD."
-                echo "TARGET_SHA=${target_sha}"
-                echo "origin/main=${current_main}"
+                skip_reason="tested commit ${target_sha} is no longer current main HEAD (${current_main})."
+                echo "Skipping automatic release: ${skip_reason}"
               else
                 proceed="true"
               fi
@@ -127,8 +132,13 @@ jobs:
             echo "- Trigger: \`${trigger}\`"
             echo "- Proceed: \`${proceed}\`"
             echo "- TARGET_SHA: \`${target_sha}\`"
-            if [[ "${proceed}" != "true" && "${EVENT_NAME}" == "workflow_run" ]]; then
-              echo "- Result: automatic release skipped (no production changes)."
+            if [[ "${proceed}" == "true" ]]; then
+              echo "- Result: proceeding to release + deploy-production."
+            elif [[ -n "${skip_reason}" ]]; then
+              echo "- Result: automatic release skipped."
+              echo "- Reason: ${skip_reason}"
+            else
+              echo "- Result: automatic release skipped."
             fi
           } >> "${GITHUB_STEP_SUMMARY}"
 
