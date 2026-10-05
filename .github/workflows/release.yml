@@ -464,12 +464,9 @@ jobs:
             exit 1
           fi
 
-          # Safe diagnostics only (public fingerprint + key type). Never print private key material.
-          pub_tmp="$(mktemp)"
-          ssh-keygen -y -f "${key_file}" > "${pub_tmp}"
-          echo "Deploy key type/fingerprint (compare with server authorized_keys):"
-          ssh-keygen -lf "${pub_tmp}" -E sha256
-          rm -f "${pub_tmp}"
+          # Fingerprint only (never print the private key). Helps match GitHub secret ↔ server authorized_keys.
+          echo "Deploy key fingerprint:"
+          ssh-keygen -lf "${key_file}"
 
       - name: Deploy immutable digest via forced-command SSH
         env:
@@ -485,17 +482,24 @@ jobs:
           fi
           remote_cmd="deploy ${DEPLOY_IMAGE}"
           echo "SSH target: ${SSH_USER}@${SSH_HOST}:${SSH_PORT}"
+          set +e
           ssh \
             -i "${HOME}/.ssh/mehrafarin_deploy" \
             -o BatchMode=yes \
             -o IdentitiesOnly=yes \
-            -o PreferredAuthentications=publickey \
-            -o PubkeyAuthentication=yes \
             -o StrictHostKeyChecking=yes \
             -o UserKnownHostsFile="${HOME}/.ssh/known_hosts" \
             -p "${SSH_PORT}" \
             "${SSH_USER}@${SSH_HOST}" \
             "${remote_cmd}"
+          rc=$?
+          set -e
+          if [[ "${rc}" -ne 0 ]]; then
+            echo "::error::SSH deploy failed (exit ${rc}). Permission denied (publickey) means the private key in SSH_PRIVATE_KEY does not match an authorized public key for SSH_USER on the server."
+            echo "On the server, confirm authorized_keys for ${SSH_USER} contains the matching public key with:"
+            echo '  restrict,command="/usr/local/bin/mehrafarin-deploy-ssh" ssh-ed25519 AAAA... mehrafarin-gha-deploy'
+            exit "${rc}"
+          fi
 
       - name: Write deploy summary
         if: success()
