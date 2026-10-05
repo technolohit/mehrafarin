@@ -1,0 +1,14 @@
+# Mehrafarin production deploy — sudoers drop-in
+# Install as: /etc/sudoers.d/mehrafarin-deploy
+# Ownership: root:root
+# Mode: 0440
+# Validate before enabling: visudo -cf /etc/sudoers.d/mehrafarin-deploy
+#
+# This grants ONLY:
+#   deploy-mehrafarin -> /usr/local/sbin/deploy-mehrafarin
+
+Defaults:deploy-mehrafarin !requiretty
+
+Cmnd_Alias MEHRAFARIN_DEPLOY = /usr/local/sbin/deploy-mehrafarin
+
+deploy-mehrafarin ALL=(root) NOPASSWD: MEHRAFARIN_DEPLOY

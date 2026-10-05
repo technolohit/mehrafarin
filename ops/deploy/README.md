@@ -36,16 +36,23 @@ you manually pull a real digest from Docker Hub / Actions).
 
 ### 2. Deploy binary + SSH forced command
 
+Preferred one-shot (as root on the VPS, from a checkout of this repo):
+
+```bash
+sudo bash ops/deploy/bootstrap-deploy-user.sh
+```
+
+That installs `deploy-mehrafarin`, the forced-command wrapper, sudoers drop-in
+`ops/deploy/sudoers.deploy-mehrafarin`, creates user `deploy-mehrafarin`, writes
+`authorized_keys`, and adds the user to `AllowUsers` in
+`/etc/ssh/sshd_config.d/99-begamun-hardening.conf` (shared VPS hardening).
+
+Manual equivalent:
+
 ```bash
 sudo install -o root -g root -m 0755 ops/deploy/deploy-mehrafarin /usr/local/sbin/deploy-mehrafarin
 sudo install -o root -g root -m 0755 ops/deploy/mehrafarin-deploy-ssh /usr/local/bin/mehrafarin-deploy-ssh
-```
-
-Create a dedicated deploy user (or reuse pattern from Begamun) and sudoers:
-
-```
-# /etc/sudoers.d/mehrafarin-deploy
-deploy-mehrafarin ALL=(root) NOPASSWD: /usr/local/sbin/deploy-mehrafarin
+sudo install -o root -g root -m 0440 ops/deploy/sudoers.deploy-mehrafarin /etc/sudoers.d/mehrafarin-deploy
 ```
 
 `authorized_keys` for that user (GitHub Actions key only):
@@ -53,6 +60,9 @@ deploy-mehrafarin ALL=(root) NOPASSWD: /usr/local/sbin/deploy-mehrafarin
 ```
 restrict,command="/usr/local/bin/mehrafarin-deploy-ssh" ssh-ed25519 AAAA... mehrafarin-gha-deploy
 ```
+
+On this host, `sshd` `AllowUsers` must include `deploy-mehrafarin` or auth fails
+with `Permission denied (publickey)` even when the key matches.
 
 ### 3. Nginx + Certbot (`darmanafarin.com`)
 
