@@ -464,6 +464,13 @@ jobs:
             exit 1
           fi
 
+          # Safe diagnostics only (public fingerprint + key type). Never print private key material.
+          pub_tmp="$(mktemp)"
+          ssh-keygen -y -f "${key_file}" > "${pub_tmp}"
+          echo "Deploy key type/fingerprint (compare with server authorized_keys):"
+          ssh-keygen -lf "${pub_tmp}" -E sha256
+          rm -f "${pub_tmp}"
+
       - name: Deploy immutable digest via forced-command SSH
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
@@ -477,10 +484,13 @@ jobs:
             exit 1
           fi
           remote_cmd="deploy ${DEPLOY_IMAGE}"
+          echo "SSH target: ${SSH_USER}@${SSH_HOST}:${SSH_PORT}"
           ssh \
             -i "${HOME}/.ssh/mehrafarin_deploy" \
             -o BatchMode=yes \
             -o IdentitiesOnly=yes \
+            -o PreferredAuthentications=publickey \
+            -o PubkeyAuthentication=yes \
             -o StrictHostKeyChecking=yes \
             -o UserKnownHostsFile="${HOME}/.ssh/known_hosts" \
             -p "${SSH_PORT}" \
